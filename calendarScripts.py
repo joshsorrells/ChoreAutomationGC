@@ -9,11 +9,19 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from scripts import *
+
 # If modifying these scopes, delete the file token.json.
-SCOPES = ['https://www.googleapis.com/auth/calendar.readonly']
+SCOPES = ['https://www.googleapis.com/auth/calendar.readonly', 'https://www.googleapis.com/auth/tasks']
+
+"""
+
+Returns a dictionary of datetime objects to their appropriate amount of free time.
+
+"""
 
 
-def main():
+def calendar_availability(period = 10):
     """Shows basic usage of the Google Calendar API.
     Prints the start and name of the next 10 events on the user's calendar.
     """
@@ -40,24 +48,29 @@ def main():
 
         # Call the Calendar API
         now = datetime.datetime.utcnow().isoformat() + 'Z'  # 'Z' indicates UTC time
-        print('Getting the upcoming 10 events')
-        events_result = service.events().list(calendarId="josh.sorrells99@gmail.com", timeMin=now,
-                                              maxResults=10, singleEvents=True,
-                                              orderBy='startTime').execute()
+        end_date = (datetime.datetime.utcnow() + datetime.timedelta(days=period)).isoformat() + 'Z'  # 'Z' indicates UTC time
+
+        events_result = service.events().list(calendarId="josh.sorrells99@gmail.com", 
+                                            timeMin=now,
+                                            timeMax = end_date,
+                                            singleEvents=True,
+                                            orderBy='startTime').execute()
         events = events_result.get('items', [])
 
         if not events:
             print('No upcoming events found.')
             return
 
-        # Prints the start and name of the next 10 events
-        for event in events:
-            start = event['start'].get('dateTime', event['start'].get('date'))
-            print(start, event['summary'])
+        # # Prints the start and name of the next 10 events
+        # for event in events:
+        #     start = event['start'].get('dateTime', event['start'].get('date'))
+        #     print(start, event['summary'])
+
+        output = return_time_availability(events, period)
+
+        return output
 
     except HttpError as error:
         print('An error occurred: %s' % error)
-
-
 if __name__ == '__main__':
     main()
